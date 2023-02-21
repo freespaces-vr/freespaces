@@ -1,0 +1,12 @@
+{
+  "name": "freespaces",
+  "version": "0.0.1",
+  "description": "Free open web XR rooms with customization",
+  "main": "index.js",
+  "type": "module",
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.5.4",
+    "uuid": "^9.0.0"
+  }
+}

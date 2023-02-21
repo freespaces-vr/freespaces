@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Freespaces</title>
+  <style>
+    body {
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module">
+    import * as THREE from './js/three.module.js';
+    import { VRButton } from './js/VRButton.js';
+
+    const socket = io();
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+    // document.body.appendChild(VRButton.createButton(renderer));
+    renderer.xr.enabled = true;
+
+    let objects = [];
+
+    socket.on('sync', (sceneInfo) => {
+      sceneInfo.objects.forEach(o => {
+        let obj = objects.find(obj => obj.id === o.id);
+        if (obj) {
+          obj.mesh.position.x = o.position.x;
+          obj.mesh.position.y = o.position.y;
+          obj.mesh.position.z = o.position.z;
+          obj.mesh.rotation.x = o.rotation.x;
+          obj.mesh.rotation.y = o.rotation.y;
+          obj.mesh.rotation.z = o.rotation.z;
+        } else {
+          if (o.type === "ThreeBox") {
+            const geometry = new THREE.BoxGeometry(o.size.x, o.size.y, o.size.z);
+            const material = new THREE.MeshBasicMaterial({ color: o.color });
+            const mesh = new THREE.Mesh(geometry, material);
+            o.mesh = mesh;
+            mesh.position.x = o.position.x;
+            mesh.position.y = o.position.y;
+            mesh.position.z = o.position.z;
+            mesh.rotation.x = o.rotation.x;
+            mesh.rotation.y = o.rotation.y;
+            mesh.rotation.z = o.rotation.z;
+            scene.add(mesh);
+            objects.push(o);
+          }
+        }
+      });
+      let missingObjects = objects.filter(o => !sceneInfo.objects.find(obj => obj.id === o.id));
+      if (missingObjects.length > 0) {
+        console.log('Cleaning scene!');
+        missingObjects.forEach(obj => {
+          scene.remove(obj.mesh);
+        });
+      }
+      objects = objects.filter(o => sceneInfo.objects.find(obj => obj.id === o.id));
+    });
+
+    renderer.setAnimationLoop(function () {
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+
+</html>
